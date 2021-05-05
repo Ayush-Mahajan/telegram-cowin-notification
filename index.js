@@ -151,4 +151,4 @@ async function fetchNext10Days(){
     dates.push(dateString);
     today.add(1, 'day');
     return dates;
-}
+}   
