@@ -5,29 +5,22 @@ const axios = require('axios');
 
 async function main() {
     try {
+        loopCounter = 1;
         cron.schedule("*/1 * * * *", async () => {
-                    var config = {
-                        method: 'get',
-                        url: Token,
-                        data: {
-                            chat_id: chat_id,
-                            text: message,
-                        }
-                    }
-                    axios(config)
-                    .then(function (response) {
-                    })
-                    .catch(function (error) {
-                        console.log("erroring out -", error.response.data);
-                    })
-					districtArray = [312, 314, 337, 363, 165, 247, 188];
-                    districtNameArray = ["Bhopal", "Indore", "Chhindwara", "Pune", "Surat", "East Singhbhum", "Gurgaon"]
-					districtArray.forEach(async (district, i) => {
-                        console.log(districtNameArray[i], "  ", district);
-						await checkAvailability(district, districtNameArray[i]);
-						console.log("done");
-					});
-				});
+            console.log(loopCounter++);
+            districtArray = [312, 314, 337, 363, 165, 247, 188];
+            districtNameArray = ["Bhopal", "Indore", "Chhindwara", "Pune", "Surat", "East Singhbhum", "Gurgaon"]
+            intevalTimeCounter = 0;
+            districtArray.forEach(async (district, i) => {
+                
+                setTimeout(async () => {
+                    intevalTimeCounter++
+                    console.log(districtNameArray[i], "  ", district);
+                    await checkAvailability(district, districtNameArray[i]);
+                    console.log("done  ", intevalTimeCounter * 1000);
+                },intevalTimeCounter * 1500)
+            });
+        });
     } catch (e) {
         console.log('an error occured: ' + JSON.stringify(e, null, 2));
         throw e;
@@ -50,47 +43,49 @@ async function getSlotsForDate(DATE, DISTRICT, districtName) {
     let config = {
         method: 'get',
         url: 'https://cdn-api.co-vin.in/api/v2/appointment/sessions/calendarByDistrict?district_id=' + DISTRICT + '&date=' + DATE,
-        headers: {
-            'accept': 'application/json',
-            'Accept-Language': 'hi_IN'
-        }
+        headers: { 
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8', 
+            'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:88.0) Gecko/20100101 Firefox/88.0', 
+            'Host': 'cdn-api.co-vin.in', 
+            'Connection': 'keep-alive'
+          }
     };
 
     axios(config)
-        .then(function (slots) {
-            if (slots){
-            let sessions = slots.data.centers.map((x) => {
-							y = x.sessions.filter(
-								(session) =>{
-									if (session.min_age_limit < 45 && session.available_capacity > 0){
-                                        return true
-                                    } else return false
-                                }
-							);
+			.then(function (slots) {
+				if (slots) {
+					let sessions = slots.data.centers
+						.map((x) => {
+							y = x.sessions.filter((session) => {
+								if ( session.min_age_limit < 45 && session.available_capacity > 0 ) {
+									return true;
+								} else return false;
+							});
 							if (y != false) {
-                                session = y.map(session => {
-                                    return {
-                                        date: session.date,
-                                        available_capacity: session.available_capacity,
-                                        vaccin: session.vaccin,
-                                    }
-                                })
+								session = y.map((session) => {
+									return {
+										date: session.date,
+										available_capacity: session.available_capacity,
+										vaccin: session.vaccin,
+									};
+								});
 								return {
-                                    centerName: x.name,
-                                    address: x.address,
-                                    pincode: x.pincode,
-                                    session: session,
-                                };
-							} else return false
-						}).filter(x => x!= false);
-            if(sessions.length > 0) {
-                notifyMe(sessions, districtName);
-            }
-        }
-        })
-        .catch(function (error) {
-            console.log(error);
-        });
+									centerName: x.name,
+									address: x.address,
+									pincode: x.pincode,
+									session: session,
+								};
+							} else return false;
+						})
+						.filter((x) => x != false);
+					if (sessions.length > 0) {
+						notifyMe(sessions, districtName);
+					}
+				}
+			})
+			.catch(function (error) {
+				console.log(error);
+			});
 
 }
 
@@ -123,7 +118,7 @@ function notifyMe(slots, districtName) {
                     method: 'get',
                     url: token,
                     data: {
-                        chat_id: chat_id,
+                        chat_id: chatId,
                         text: message,
                     }
                 }
